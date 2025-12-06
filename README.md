@@ -1,7 +1,7 @@
 # Electric Vehicles & Cryptocurrency Analysis
 
 This project refactors my undergraduate coursework (CST2330- Database Analysis for Enterprise Modelling) into a clean and reproducible data science project in R.
-It combines **finance, optimisation, exploratory data analysis, and time-series modelling** in a single repo.
+It combines finance, optimisation, exploratory data analysis, and time-series modelling.
 
 ---
 
