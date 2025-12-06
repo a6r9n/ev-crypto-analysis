@@ -5,7 +5,7 @@ It combines **finance, optimisation, exploratory data analysis, and time-series 
 
 ---
 
-## 🔗 Live HTML report
+## Live HTML report
 
 📄 **Full report:**  
 https://a6r9n.github.io/ev-crypto-analysis/ev_crypto_analysis.html
@@ -14,7 +14,7 @@ The report is generated from `analysis/ev_crypto_analysis.Rmd` and rendered via 
 
 ---
 
-## 🧩 Project highlights
+## Project highlights
 
 - **Net Present Value (NPV) modelling**  
   - Five-year EV investment cashflows  
@@ -40,7 +40,7 @@ All original coursework data has been **anonymised** before inclusion in this re
 
 ---
 
-## 📂 Repository structure
+## Repository structure
 
 ```text
 .
