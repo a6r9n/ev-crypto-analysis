@@ -16,7 +16,8 @@ The report is generated from `analysis/ev_crypto_analysis.Rmd` and rendered via 
 
 ## Project highlights
 
-- **Net Present Value (NPV) modelling**  
+- **Net Present Value (NPV) modelling**
+  ![NPV vs discount rate](docs/NPV.png)
   - Five-year EV investment cashflows  
   - Custom `analyse_cashflow()` function to recompute NPV for any discount rate  
   - IRR estimation from an NPV–rate curve
@@ -26,7 +27,8 @@ The report is generated from `analysis/ev_crypto_analysis.Rmd` and rendered via 
   - Uses `lpSolve` to maximise profit under semiconductor, capacity and contract constraints  
   - Compares scenarios with different semiconductor supply limits
 
-- **Electric vehicle dataset EDA**  
+- **Electric vehicle dataset EDA**
+   ![Range vs Battery Size](docs/EV.png)
   - Anonymised EV dataset (~200 vehicles)  
   - Relationships between battery size, range, performance and price  
   - “Which car is…?” queries for max range, efficiency, speed, acceleration and cheapest model
