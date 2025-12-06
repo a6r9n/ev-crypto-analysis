@@ -1,0 +1,233 @@
+---
+title: "Electric Vehicles and Cryptocurrency Analyses"
+author: "Afrin F Razvi"
+output:
+  html_document:
+    toc: true
+    toc_depth: 2
+    theme: cosmo
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+
+source("../R/npv_functions.R")
+source("../R/lp_models.R")
+source("../R/ev_eda.R")
+source("../R/crypto_processing.R")
+
+library(ggplot2)
+library(dplyr)
+```
+
+# 1. Net Present Value (NPV) for EV Investment
+
+In this section, I analyse a five-year investment in battery-powered electric vehicles (EVs) using Net Present Value (NPV). The aim is to understand whether the projected cashflows generate sufficient value at different discount rates.
+
+## 1.1 Cashflow table
+
+```{r npv-cashflows}
+cashflows <- build_cashflows()
+cashflows
+```
+
+The table summarises the expected inflows and outflows from 2023 to 2028. All values are in billions of pounds.
+
+## 1.2 NPV at a 3% discount rate
+
+```{r npv-3pct}
+result_3pct <- analyse_cashflow(cashflows, rate = 0.03)
+result_3pct$cashflows
+result_3pct$total_npv
+```
+
+A positive `total_npv` at 3% indicates that the discounted cash inflows exceed the discounted outflows. In other words, at this discount rate the investment is expected to create value rather than destroy it.
+
+## 1.3 NPV across multiple discount rates and IRR
+
+Here I evaluate how sensitive the NPV is to the discount rate between 0% and 15%.
+
+```{r npv-curve}
+rates <- seq(0, 0.15, by = 0.01)
+npv_df <- npv_vs_rate(cashflows, rates)
+
+ggplot(npv_df, aes(x = rate * 100, y = npv)) +
+  geom_line() +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  labs(
+    title = "Net Present Value by Discount Rate",
+    x = "Discount Rate (%)",
+    y = "Total Net Present Value (£B)"
+  )
+```
+
+The **internal rate of return (IRR)** is the discount rate at which NPV is approximately zero.
+
+```{r irr}
+irr_index <- which.min(abs(npv_df$npv))
+irr_rate  <- npv_df$rate[irr_index]
+irr_rate * 100
+```
+
+At discount rates **lower** than the IRR, the NPV is positive and the investment is attractive. At rates **higher** than the IRR, the NPV is negative, suggesting that the required return is too high for this cashflow profile.
+
+# 2. Linear Programming: Production Planning
+
+This section models the production of ICE cars, EVs and hybrids as a linear programming problem and solves it using `lpSolve`.
+
+## 2.1 ICE vs EV
+
+Here I model only ICE and EV production, using your original constraints on semiconductors, production rate and minimum ICE contract.
+
+```{r lp-two-var}
+sol_2var <- solve_ice_ev()
+sol_2var
+```
+
+The solution returns the optimal daily quantities of ICE cars and EVs, together with the maximum daily profit achievable under the constraints.
+
+## 2.2 ICE, EV and Hybrid vehicles
+
+Next I extend the model to include hybrid vehicles and reuse the same constraints, with the semiconductor limit as a parameter.
+
+### Baseline: 1,500 semiconductor boxes per day
+
+```{r lp-three-var-1500}
+sol_3var_1500 <- solve_ice_ev_hybrid(semiconductor_limit = 1500)
+sol_3var_1500
+```
+
+### Increased supply: 3,000 semiconductor boxes per day
+
+```{r lp-three-var-3000}
+sol_3var_3000 <- solve_ice_ev_hybrid(semiconductor_limit = 3000)
+sol_3var_3000
+```
+
+Comparing these solutions shows how the optimal production mix and profit change as the semiconductor constraint is relaxed. The model makes it clear which vehicle type scales most profitably when the bottleneck resource is expanded.
+
+# 3. Electric Vehicle Dataset: Exploratory Analysis
+
+In this section I work with an anonymised EV dataset. It contains technical and pricing information for around 200 electric vehicles.
+
+## 3.1 Load and inspect the data
+
+```{r ev-load}
+ev <- load_ev_data()
+dim(ev)
+head(ev)
+```
+
+The dataset includes battery size, range, top speed, efficiency and price, among other attributes.
+
+## 3.2 Key relationships
+
+### Range vs battery size
+
+```{r ev-plot-range-battery}
+ggplot(ev, aes(x = Battery, y = Range)) +
+  geom_point(alpha = 0.6) +
+  labs(
+    title = "Range vs Battery Size",
+    x = "Battery (kWh)",
+    y = "Range (km)"
+  )
+```
+
+### Price vs top speed
+
+```{r ev-plot-price-speed}
+ggplot(ev, aes(x = TopSpeed, y = Price)) +
+  geom_point(alpha = 0.6) +
+  labs(
+    title = "Price vs Top Speed",
+    x = "Top Speed (km/h)",
+    y = "Price (£)"
+  )
+```
+
+### Charge speed vs battery size
+
+```{r ev-plot-charge-battery}
+ggplot(ev, aes(x = FastChargeSpeed, y = Battery)) +
+  geom_point(alpha = 0.6) +
+  labs(
+    title = "Fast Charge Speed vs Battery Size",
+    x = "Fast Charge Speed (km/h)",
+    y = "Battery (kWh)"
+  )
+```
+
+Together, these plots highlight how range tends to scale with battery size, how performance relates to price, and how charging characteristics vary across the fleet.
+
+## 3.3 “Which car is…?” queries
+
+```{r ev-summary}
+ev_stats <- ev_summary_stats(ev)
+
+ev_stats$max_range        # maximum range
+ev_stats$most_efficient   # minimum Wh per km
+ev_stats$fastest          # highest top speed
+ev_stats$fastest_accel    # lowest 0–100 time
+ev_stats$cheapest         # lowest price
+```
+
+These queries reproduce the kind of targeted questions often asked in exploratory phases: identifying extremes, best performers and budget options within the dataset.
+
+# 4. Cryptocurrency Candles: Prices and Log-Returns
+
+The final section works with an anonymised daily OHLC cryptocurrency dataset and constructs:
+
+* a **prices matrix** with one column per trading pair, and
+* the corresponding **log-returns**.
+
+## 4.1 Load data and build prices table
+
+```{r crypto-load}
+candles <- load_crypto()
+head(candles)
+```
+
+```{r prices-matrix}
+prices <- build_prices_matrix(candles)
+dim(prices)
+head(prices[, 1:3])
+```
+
+Each column in `prices` corresponds to a trading pair; each row corresponds to a calendar date.
+
+## 4.2 Clean missing values and compute log-returns
+
+```{r log-returns}
+log_returns <- clean_and_log_returns(prices)
+dim(log_returns)
+head(log_returns[, 1:3])
+```
+
+Log-returns express day-to-day percentage changes in log scale and are typically preferred for time-series modelling of financial assets.
+
+## 4.3 Example plots for selected pairs
+
+Here I plot prices and log-returns for three anonymised pairs.
+
+```{r crypto-plots, fig.height=8}
+pair_names <- colnames(prices)[1:3]
+
+par(mfrow = c(3, 2), mar = c(3, 4, 2, 1))
+
+for (p in pair_names) {
+  plot(prices[, p],
+       main = paste("Price -", p),
+       xlab = "Date", ylab = "Close")
+  
+  plot(log_returns[, p],
+       main = paste("Log returns -", p),
+       xlab = "Date", ylab = "Log return")
+}
+
+par(mfrow = c(1, 1))
+```
+
+Large spikes and drops in the log-returns series correspond to abrupt price moves in the underlying pair, often aligning with periods of macroeconomic stress or market-wide repricing.
+
+
