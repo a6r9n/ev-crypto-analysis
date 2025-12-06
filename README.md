@@ -15,4 +15,7 @@ It includes:
 2. Open `analysis/ev_crypto_analysis.Rmd`
 3. Click **Knit**.
 
+[View the full HTML report](https://a6r9n.github.io/ev-crypto-analysis/ev_crypto_analysis.html)
+
 All datasets are anonymised.
+
